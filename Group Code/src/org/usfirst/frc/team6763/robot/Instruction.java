@@ -44,6 +44,7 @@ public class Instruction {
 		RAISE_LIFT,
 		LOWER_LIFT,
 		EJECT_CUBE,
-		PULL_CUBE;
+		PULL_CUBE,
+		WAIT;
 	}
 }

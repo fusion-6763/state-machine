@@ -61,7 +61,10 @@ public class Robot extends IterativeRobot {
 	
 	double o;
 	double op;
-	final double d = .005;
+	final double d = .006;
+	final double DecelerationRate = .005;
+	final double ScaleOutput = 0.8;
+	final double SwitchOutput = 0.5;
 	final double DistanceScale = 0.8;
 	
 	//Spark climber = new Spark(7);
@@ -115,8 +118,8 @@ public class Robot extends IterativeRobot {
 		SmartDashboard.putNumber("Gyro", navx.getYaw());
 		
 		//System.out.println(leftEncoder.get());
-		System.out.println("Left Encoder: " + leftEncoder.get());
-		System.out.println("Right Encoder: " + rightEncoder.get());
+		//System.out.println("Left Encoder: " + leftEncoder.get());
+		//System.out.println("Right Encoder: " + rightEncoder.get());
 	}
 	
 	/**
@@ -127,13 +130,16 @@ public class Robot extends IterativeRobot {
 	{
 		System.out.println("Auto selected: " + m_chooser.getSelected());
 		
+		o = 0.4;
+		instructionIndex = 0;
+		
 		navx.reset();
 		leftEncoder.reset();
 		rightEncoder.reset();
 		
 		data = DriverStation.getInstance().getGameSpecificMessage();
 		
-		defaultSpeed = SmartDashboard.getNumber("Default Speed", 0.5);
+		defaultSpeed = SmartDashboard.getNumber("Default Speed", 0.8);
 		
 		timer.stop();
 		timer.reset();
@@ -173,6 +179,7 @@ public class Robot extends IterativeRobot {
 					case Blue1:
 					case Red1:
 						autoMode = AutonomousMode.scaleLeftPositionLeft;
+						System.out.println("Picked Auto Mode");
 						break;
 					case Blue2:
 					case Red2:
@@ -230,7 +237,7 @@ public class Robot extends IterativeRobot {
 	@Override
 	public void autonomousPeriodic() {
 		Instruction instruction = new Instruction(State.STOP, 0, 0);
-		if(instructionIndex > autoMode.size()) {
+		if(instructionIndex < autoMode.size()) {
 			instruction = autoMode.get(instructionIndex);
 		}
 		
@@ -239,6 +246,7 @@ public class Robot extends IterativeRobot {
 		switch (instruction.getState()) {
 		
 			case DRIVE_FORWARD:
+				System.out.println("Robot Driving Forward: " + getDistanceTraveled());
 				if (getDistanceTraveled() < instruction.getLimit()) {
 					if(o < defaultSpeed && leftEncoder.get() / ticksPerInch < DistanceScale * instruction.getLimit()) {
 						o+=d;
@@ -274,16 +282,19 @@ public class Robot extends IterativeRobot {
 				break;
 				
 			case TURN_RIGHT:
+				System.out.println("Robot Turning Right");
 				if(o <= 0.4) {
 					o = defaultSpeed;
 				}
 				if (currentAngle < instruction.getTargetAngle() - tolerance ||
 				    currentAngle > instruction.getTargetAngle() + tolerance) {
-					if(o > 0.6) {
-						o -= d;
+					if(o > 0.55) {
+						o -= DecelerationRate;
 					}
 					myRobot.tankDrive(o, -o);
 				} else {
+					leftEncoder.reset();
+					rightEncoder.reset();
 					instructionIndex++;
 				}
 				break;
@@ -294,17 +305,22 @@ public class Robot extends IterativeRobot {
 				}
 				if (currentAngle < instruction.getTargetAngle() - tolerance ||
 				    currentAngle > instruction.getTargetAngle() + tolerance) {
-					if(o > 0.6) {
-						o -= d;
+					if(o > 0.55) {
+						o -= DecelerationRate;
 					}
 					myRobot.tankDrive(-o, o);
 				} else {
+					leftEncoder.reset();
+					rightEncoder.reset();
 					instructionIndex++;
 				}
 				break;
 				
 			case RAISE_LIFT:
-				timer.start();
+				if (Double.compare(timer.get(), 0) == 0) {
+					timer.start();
+				}
+				System.out.println("Time: "+timer.get());
 				if(timer.get() < instruction.getLimit()) {
 					elevator1.set(1.0);
 					elevator2.set(1.0);
@@ -319,16 +335,35 @@ public class Robot extends IterativeRobot {
 				}
 				break;
 			case EJECT_CUBE:
-				timer.start();
+				if (Double.compare(timer.get(), 0) == 0) {
+					timer.start();
+				}
 				if(timer.get() < instruction.getLimit()) {
-					intakeL.set(0.8);
-					intakeR.set(0.8);
+					intakeL.set((m_chooser.getSelected().equals("switch")) ? SwitchOutput : ScaleOutput);
+					intakeR.set((m_chooser.getSelected().equals("switch")) ? SwitchOutput : ScaleOutput);
 				}
 				else {
 					timer.stop();
 					timer.reset();
 					intakeL.set(-0.2);
 					intakeR.set(-0.2);
+					instructionIndex++;
+				}
+				break;
+			case WAIT:
+				if (Double.compare(timer.get(), 0) == 0) {
+					timer.start();
+				}
+				if (timer.get() < instruction.getLimit()) {
+					try {
+						timer.wait(10);
+					} catch (InterruptedException | IllegalMonitorStateException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				} else {
+					timer.stop();
+					timer.reset();
 					instructionIndex++;
 				}
 				break;
@@ -346,10 +381,6 @@ public class Robot extends IterativeRobot {
 	 */
 	@Override
 	public void teleopPeriodic() {
-		if(bumperR.get()) {
-			myRobot.arcadeDrive(-(DriveStick.getY() / 2), DriveStick.getX() / 2);
-		}
-		else {
 			if(bumperR.get()) {
 				myRobot.arcadeDrive(-(DriveStick.getY()*0.6), DriveStick.getX()*0.6);
 			}
@@ -361,8 +392,8 @@ public class Robot extends IterativeRobot {
 			
 			//climber.set(-stick.getRawAxis(3));
 			
-			elevator1.set(-stick.getRawAxis(5));
-			elevator2.set(-stick.getRawAxis(5));
+			elevator1.set(-stick.getRawAxis(5) / 1.5);
+			elevator2.set(-stick.getRawAxis(5) / 1.5);
 			
 			//System.out.println("Elevator Encoder: "+elevatorEncoder.get());
 
@@ -383,7 +414,7 @@ public class Robot extends IterativeRobot {
 				intakeR.set(-0.2);
 			}
 		}
-	}
+	
 
 	/**
 	 * This function is called periodically during test mode.
@@ -423,9 +454,10 @@ public class Robot extends IterativeRobot {
 	 * @return The distance traveled in inches.
 	 */
 	private float getDistanceTraveled() {
-		final float leftDistance = leftEncoder.get() * ticksPerInch;
-		final float rightDistance = rightEncoder.get() * ticksPerInch;
-		
+		final float leftDistance = leftEncoder.get() / ticksPerInch;
+		final float rightDistance = rightEncoder.get() / ticksPerInch;
+		//System.out.println("Left Encoder: "+leftEncoder.get());
+		//System.out.println("Right Encoder: "+rightEncoder.get());
 		return (leftDistance + rightDistance) / 2f;
 	}
 }
