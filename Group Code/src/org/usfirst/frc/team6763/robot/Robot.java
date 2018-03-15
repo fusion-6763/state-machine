@@ -156,11 +156,14 @@ public class Robot extends IterativeRobot {
 				switch (HAL.getAllianceStation()) {
 					case Blue1:
 					case Red1:
+						autoMode = AutonomousMode.scaleRightPositionLeft;
 						break;
 					case Blue2:
 					case Red2:
+						autoMode = AutonomousMode.scaleRightPositionCenter;
 						break;
 					default:
+						autoMode = AutonomousMode.scaleRightPositionRight;
 						break;
 				}
 			} else {
@@ -169,11 +172,14 @@ public class Robot extends IterativeRobot {
 				switch (HAL.getAllianceStation()) {
 					case Blue1:
 					case Red1:
+						autoMode = AutonomousMode.scaleLeftPositionLeft;
 						break;
 					case Blue2:
 					case Red2:
+						autoMode = AutonomousMode.scaleLeftPositionCenter;
 						break;
 					default:
+						autoMode = AutonomousMode.scaleLeftPositionRight;
 						break;
 				}
 			} 
@@ -186,29 +192,35 @@ public class Robot extends IterativeRobot {
 				switch (HAL.getAllianceStation()) {
 					case Blue1:
 					case Red1:
+						autoMode = AutonomousMode.switchRightPositionLeft;
 						break;
 					case Blue2:
 					case Red2:
+						autoMode = AutonomousMode.switchRightPositionCenter;
 						break;
 					default:
+						autoMode = AutonomousMode.switchRightPositionRight;
 						break;
 				}
 			}
 			else {
 				switch (HAL.getAllianceStation()) {
-				case Blue1:
-				case Red1:
-					autoMode=AutonomousMode.switchLeftPositionLeft;
-					break;
-				case Blue2:
-				case Red2:
-					break;
-				default:
-					break;
-			}
+					case Blue1:
+					case Red1:
+						autoMode = AutonomousMode.switchLeftPositionLeft;
+						break;
+					case Blue2:
+					case Red2:
+						autoMode = AutonomousMode.switchLeftPositionCenter;
+						break;
+					default:
+						autoMode = AutonomousMode.switchLeftPositionRight;
+						break;
+				}
 			}
 		} else {
 			// Set to default mode (STOP)
+			autoMode = AutonomousMode.stop;
 		}
 	}
 
@@ -228,65 +240,103 @@ public class Robot extends IterativeRobot {
 		
 			case DRIVE_FORWARD:
 				if (getDistanceTraveled() < instruction.getLimit()) {
-					if(o < defaultSpeed && leftEncoder.get() / ticksPerInch>DistanceScale * instruction.getLimit()) {
+					if(o < defaultSpeed && leftEncoder.get() / ticksPerInch < DistanceScale * instruction.getLimit()) {
 						o+=d;
 					} else if(leftEncoder.get() / ticksPerInch > DistanceScale * instruction.getLimit() && o > 0.6){
 						o-=d;
 					}
-					accurateDrive(navx.getYaw(), defaultSpeed, instruction.getTargetAngle(), tolerance);
-				} else {
+					accurateDrive(navx.getYaw(), o, instruction.getTargetAngle(), tolerance);
+				}
+				else {
+					o = 0.4;
+					leftEncoder.reset();
+					rightEncoder.reset();
 					instructionIndex++;
 				}
 				break;
 				
 			case DRIVE_BACKWARD:
 				if (getDistanceTraveled() < instruction.getLimit()) {
-					accurateDrive(navx.getYaw(), -defaultSpeed, instruction.getTargetAngle(), tolerance);
-				} else {
+					if(o < defaultSpeed && leftEncoder.get() / ticksPerInch < DistanceScale * instruction.getLimit()) {
+						o+=d;
+					}
+					else if(leftEncoder.get() / ticksPerInch > DistanceScale * instruction.getLimit() && o > 0.6) {
+						o-=d;
+					}
+					accurateDrive(navx.getYaw(), -o, instruction.getTargetAngle(), tolerance);
+				}
+				else {
+					o = 0.4;
+					leftEncoder.reset();
+					rightEncoder.reset();
 					instructionIndex++;
 				}
 				break;
 				
 			case TURN_RIGHT:
+				if(o <= 0.4) {
+					o = defaultSpeed;
+				}
 				if (currentAngle < instruction.getTargetAngle() - tolerance ||
 				    currentAngle > instruction.getTargetAngle() + tolerance) {
-					myRobot.tankDrive(defaultSpeed, -defaultSpeed);
+					if(o > 0.6) {
+						o -= d;
+					}
+					myRobot.tankDrive(o, -o);
 				} else {
 					instructionIndex++;
 				}
 				break;
 				
 			case TURN_LEFT:
+				if(o <= 0.4) {
+					o = defaultSpeed;
+				}
 				if (currentAngle < instruction.getTargetAngle() - tolerance ||
 				    currentAngle > instruction.getTargetAngle() + tolerance) {
-					myRobot.tankDrive(-defaultSpeed, defaultSpeed);
+					if(o > 0.6) {
+						o -= d;
+					}
+					myRobot.tankDrive(-o, o);
 				} else {
 					instructionIndex++;
 				}
 				break;
 				
 			case RAISE_LIFT:
+				timer.start();
 				if(timer.get() < instruction.getLimit()) {
 					elevator1.set(1.0);
 					elevator2.set(1.0);
 					myRobot.tankDrive(0.0, 0.0);
 				}
 				else {
+					timer.stop();
+					timer.reset();
+					elevator1.set(0.0);
+					elevator2.set(0.0);
 					instructionIndex++;
 				}
-				
+				break;
 			case EJECT_CUBE:
+				timer.start();
 				if(timer.get() < instruction.getLimit()) {
 					intakeL.set(0.8);
 					intakeR.set(0.8);
 				}
-		
+				else {
+					timer.stop();
+					timer.reset();
+					intakeL.set(-0.2);
+					intakeR.set(-0.2);
+					instructionIndex++;
+				}
+				break;
 			case STOP: // Intentional fall-through
 			default:
 				myRobot.tankDrive(0, 0);
 				elevator1.set(0.0);
 				elevator2.set(0.0);
-				
 				break;
 		}
 	}

@@ -56,6 +56,5 @@ public interface AutonomousMode {
 	List<Instruction> scaleRightPositionRight = new ArrayList<Instruction>(Arrays.asList(
 			new Instruction(State.DRIVE_FORWARD, 36, 0)));
 	
-	
-	
+	List<Instruction> stop = new ArrayList<Instruction>(Arrays.asList(new Instruction(State.STOP, 0, 0)));
 }
