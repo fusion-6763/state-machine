@@ -135,8 +135,8 @@ public class Robot extends IterativeRobot {
 		
 		defaultSpeed = SmartDashboard.getNumber("Default Speed", 0.5);
 		
-		timer.reset();
 		timer.stop();
+		timer.reset();
 		
 		mode = 1;
 		
@@ -264,10 +264,29 @@ public class Robot extends IterativeRobot {
 					instructionIndex++;
 				}
 				break;
+				
+			case RAISE_LIFT:
+				if(timer.get() < instruction.getLimit()) {
+					elevator1.set(1.0);
+					elevator2.set(1.0);
+					myRobot.tankDrive(0.0, 0.0);
+				}
+				else {
+					instructionIndex++;
+				}
+				
+			case EJECT_CUBE:
+				if(timer.get() < instruction.getLimit()) {
+					intakeL.set(0.8);
+					intakeR.set(0.8);
+				}
 		
 			case STOP: // Intentional fall-through
 			default:
 				myRobot.tankDrive(0, 0);
+				elevator1.set(0.0);
+				elevator2.set(0.0);
+				
 				break;
 		}
 	}
