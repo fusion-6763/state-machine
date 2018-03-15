@@ -20,11 +20,18 @@ public interface AutonomousMode {
 			new Instruction(State.DRIVE_FORWARD, 12, -45)));
 	
 	List<Instruction> switchLeftPositionRight = new ArrayList<Instruction>(Arrays.asList(
-			new Instruction(State.DRIVE_FORWARD, 36, 0),
-			new Instruction(State.TURN_LEFT, 0, -90)));
+			new Instruction(State.DRIVE_FORWARD, 60, 0),
+			new Instruction(State.TURN_LEFT, 0, -90),
+			new Instruction(State.DRIVE_FORWARD, 148, 90),
+			new Instruction(State.TURN_RIGHT, 0, 0),
+			new Instruction(State.DRIVE_FORWARD, 29, 0)));
 	
 	List<Instruction> switchRightPositionLeft = new ArrayList<Instruction>(Arrays.asList(
-			new Instruction(State.DRIVE_FORWARD, 36, 0)));
+			new Instruction(State.DRIVE_FORWARD, 60, 0),
+			new Instruction(State.TURN_RIGHT, 0, 90),
+			new Instruction(State.DRIVE_FORWARD, 148, 90),
+			new Instruction(State.TURN_LEFT, 0, 0),
+			new Instruction(State.DRIVE_FORWARD, 29, 0)));
 	
 	List<Instruction> switchRightPositionCenter = new ArrayList<Instruction>(Arrays.asList(
 			new Instruction(State.DRIVE_FORWARD, 12, 45)));
