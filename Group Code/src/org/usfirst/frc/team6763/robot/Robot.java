@@ -37,6 +37,7 @@ import org.usfirst.frc.team6763.robot.Instruction.State;
  */
 public class Robot extends IterativeRobot {
 	private SendableChooser<String> m_chooser = new SendableChooser<>();
+	SendableChooser<String> stationChooser = new SendableChooser<>();
 	
 	DifferentialDrive myRobot = new DifferentialDrive(new Spark(0), new Spark(2));
 	Joystick stick = new Joystick(0);
@@ -76,10 +77,7 @@ public class Robot extends IterativeRobot {
 	
 	final float ticksPerInch = 53;
 	double defaultSpeed;
-	
-	boolean firstRun[];
-	int mode = 1;
-	
+		
 	float lastEncoderValue;
 	double lastTimerValue;
 	
@@ -97,6 +95,10 @@ public class Robot extends IterativeRobot {
 		m_chooser.addDefault("Scale", "scale");
 		m_chooser.addObject("Switch", "switch");
 		SmartDashboard.putData("Auto choices", m_chooser);
+		
+		stationChooser.addDefault("Station 1", "station1");
+		stationChooser.addObject("Station 2", "station2");
+		stationChooser.addObject("Station 3", "station3");
 		
 		rightEncoder.setReverseDirection(true);
 		leftEncoder.setReverseDirection(true);
@@ -143,11 +145,7 @@ public class Robot extends IterativeRobot {
 		
 		timer.stop();
 		timer.reset();
-		
-		mode = 1;
-		
-		firstRun = new boolean[] {true, true, true, true, true, true, true, true, true, true, true};
-		
+						
 		/*
 		 * Set the Autonomous Mode based on field information and supplied driver information.
 		 */
@@ -159,13 +157,11 @@ public class Robot extends IterativeRobot {
 			if (data.charAt(1) == 'R') {
 				
 				// Determine which alliance station the robot is in.
-				switch (HAL.getAllianceStation()) {
-					case Blue1:
-					case Red1:
+				switch (stationChooser.getSelected()) {
+					case "station1":
 						autoMode = AutonomousMode.scaleRightPositionLeft;
 						break;
-					case Blue2:
-					case Red2:
+					case "station2":
 						autoMode = AutonomousMode.scaleRightPositionCenter;
 						break;
 					default:
@@ -175,14 +171,12 @@ public class Robot extends IterativeRobot {
 			} else {
 				
 				// Determine which alliance station the robot is in.
-				switch (HAL.getAllianceStation()) {
-					case Blue1:
-					case Red1:
+				switch (stationChooser.getSelected()) {
+					case "station1":
 						autoMode = AutonomousMode.scaleLeftPositionLeft;
 						System.out.println("Picked Auto Mode");
 						break;
-					case Blue2:
-					case Red2:
+					case "station2":
 						autoMode = AutonomousMode.scaleLeftPositionCenter;
 						break;
 					default:
@@ -196,13 +190,11 @@ public class Robot extends IterativeRobot {
 			if (data.charAt(0) == 'R') {
 				
 				// Determine which alliance station the robot is in.
-				switch (HAL.getAllianceStation()) {
-					case Blue1:
-					case Red1:
+				switch (stationChooser.getSelected()) {
+					case "station1":
 						autoMode = AutonomousMode.switchRightPositionLeft;
 						break;
-					case Blue2:
-					case Red2:
+					case "station2":
 						autoMode = AutonomousMode.switchRightPositionCenter;
 						break;
 					default:
@@ -211,13 +203,11 @@ public class Robot extends IterativeRobot {
 				}
 			}
 			else {
-				switch (HAL.getAllianceStation()) {
-					case Blue1:
-					case Red1:
+				switch (stationChooser.getSelected()) {
+					case "station1":
 						autoMode = AutonomousMode.switchLeftPositionLeft;
 						break;
-					case Blue2:
-					case Red2:
+					case "station3":
 						autoMode = AutonomousMode.switchLeftPositionCenter;
 						break;
 					default:
